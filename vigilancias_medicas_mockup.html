@@ -1,0 +1,1246 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>GSG · Sistema de Vigilancias Médicas</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Sora:wght@500;600;700;800&family=Inter:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+/* ============ TOKENS ============ */
+:root{
+  --navy:#101A33;
+  --navy-2:#17233F;
+  --blue:#0B6FB8;
+  --blue-deep:#0A5A97;
+  --blue-light:#E8F2FB;
+  --bg:#EFF3F7;
+  --surface:#FFFFFF;
+  --border:#DFE5EC;
+  --text:#1B2333;
+  --text-muted:#6B7686;
+  --text-faint:#98A2B3;
+  --green:#158A5F;
+  --green-bg:#E4F5EE;
+  --amber:#B9770E;
+  --amber-bg:#FDF3DF;
+  --red:#C43D4B;
+  --red-bg:#FBE7E9;
+  --purple:#6B4FCE;
+  --purple-bg:#EFEAFB;
+  --radius:10px;
+  --shadow-sm:0 1px 2px rgba(16,26,51,.06);
+  --shadow-md:0 6px 20px rgba(16,26,51,.08);
+  --font-display:'Sora',sans-serif;
+  --font-body:'Inter',sans-serif;
+  --font-mono:'IBM Plex Mono',monospace;
+}
+*{box-sizing:border-box;}
+html,body{margin:0;padding:0;}
+body{
+  font-family:var(--font-body);
+  background:var(--bg);
+  color:var(--text);
+  -webkit-font-smoothing:antialiased;
+  font-size:14px;
+}
+h1,h2,h3,h4{font-family:var(--font-display);margin:0;color:var(--navy);}
+button{font-family:var(--font-body);cursor:pointer;}
+a{color:inherit;}
+::selection{background:var(--blue-light);}
+
+/* ============ LAYOUT SHELL ============ */
+.shell{display:flex;min-height:100vh;}
+
+/* ---- Sidebar ---- */
+.sidebar{
+  width:230px;
+  flex-shrink:0;
+  background:linear-gradient(180deg,var(--navy) 0%, var(--navy-2) 100%);
+  color:#C9D3E5;
+  display:flex;
+  flex-direction:column;
+  position:sticky;
+  top:0;
+  height:100vh;
+}
+.brand{
+  display:flex;align-items:center;gap:10px;
+  padding:20px 18px 16px 18px;
+  border-bottom:1px solid rgba(255,255,255,.08);
+}
+.brand-mark{
+  width:34px;height:34px;border-radius:9px;
+  background:linear-gradient(135deg,var(--blue) 0%, #34A0E8 100%);
+  display:flex;align-items:center;justify-content:center;
+  flex-shrink:0;
+  box-shadow:0 3px 10px rgba(11,111,184,.4);
+}
+.brand-mark svg{width:19px;height:19px;}
+.brand-text{line-height:1.15;}
+.brand-text .app-name{font-family:var(--font-display);font-weight:700;font-size:13.5px;color:#fff;}
+.brand-text .app-sub{font-size:10.5px;color:#8291AE;letter-spacing:.04em;text-transform:uppercase;margin-top:2px;}
+
+.nav-group-label{
+  font-size:10px;letter-spacing:.09em;text-transform:uppercase;
+  color:#5B6A8C;padding:18px 18px 6px 18px;font-weight:600;
+}
+.nav{list-style:none;margin:0;padding:4px 10px;}
+.nav li{margin-bottom:2px;}
+.nav a{
+  display:flex;align-items:center;gap:10px;
+  padding:9px 10px;border-radius:8px;
+  text-decoration:none;color:#B7C2DA;font-size:13px;font-weight:500;
+  transition:background .15s, color .15s;
+  position:relative;
+}
+.nav a svg{width:16px;height:16px;flex-shrink:0;opacity:.85;}
+.nav a:hover{background:rgba(255,255,255,.06);color:#fff;}
+.nav a.active{background:rgba(11,111,184,.28);color:#fff;}
+.nav a.active::before{
+  content:"";position:absolute;left:-10px;top:6px;bottom:6px;width:3px;
+  background:var(--blue);border-radius:0 3px 3px 0;
+}
+.nav .badge-count{
+  margin-left:auto;background:rgba(255,255,255,.12);color:#fff;
+  font-size:10.5px;padding:1px 6px;border-radius:20px;font-family:var(--font-mono);
+}
+.nav a.active .badge-count{background:var(--blue);}
+
+.sidebar-footer{
+  margin-top:auto;padding:14px 18px;border-top:1px solid rgba(255,255,255,.08);
+  font-size:11px;color:#5B6A8C;
+}
+
+/* ---- Main column ---- */
+.main{flex:1;min-width:0;display:flex;flex-direction:column;}
+
+/* ---- Topbar ---- */
+.topbar{
+  background:var(--surface);border-bottom:1px solid var(--border);
+  padding:0 26px;height:60px;
+  display:flex;align-items:center;justify-content:space-between;
+  position:sticky;top:0;z-index:20;
+}
+.topbar-left{display:flex;align-items:center;gap:14px;}
+.page-title{font-family:var(--font-display);font-size:17px;font-weight:700;color:var(--navy);}
+.breadcrumb{font-size:11.5px;color:var(--text-faint);}
+.breadcrumb b{color:var(--text-muted);font-weight:600;}
+
+.role-switch{
+  display:flex;background:var(--bg);border:1px solid var(--border);border-radius:999px;padding:3px;gap:2px;
+}
+.role-switch button{
+  border:none;background:transparent;padding:7px 14px;border-radius:999px;
+  font-size:12.5px;font-weight:600;color:var(--text-muted);white-space:nowrap;
+  display:flex;align-items:center;gap:6px;transition:.15s;
+}
+.role-switch button svg{width:13px;height:13px;}
+.role-switch button.active{background:var(--navy);color:#fff;box-shadow:var(--shadow-sm);}
+
+.topbar-right{display:flex;align-items:center;gap:16px;}
+.icon-btn{
+  width:34px;height:34px;border-radius:8px;border:1px solid var(--border);background:var(--surface);
+  display:flex;align-items:center;justify-content:center;position:relative;color:var(--text-muted);
+}
+.icon-btn svg{width:16px;height:16px;}
+.icon-btn .dot{
+  position:absolute;top:-3px;right:-3px;width:8px;height:8px;border-radius:50%;background:var(--red);
+  border:2px solid var(--surface);
+}
+.user-chip{display:flex;align-items:center;gap:9px;padding-left:14px;border-left:1px solid var(--border);}
+.avatar{
+  width:32px;height:32px;border-radius:8px;background:linear-gradient(135deg,#0B6FB8,#4C8DF0);
+  color:#fff;font-family:var(--font-display);font-weight:700;font-size:12.5px;
+  display:flex;align-items:center;justify-content:center;
+}
+.user-meta{line-height:1.2;}
+.user-meta .u-name{font-weight:600;font-size:12.5px;color:var(--navy);}
+.user-meta .u-role{font-size:10.5px;color:var(--text-faint);}
+
+/* ---- Content ---- */
+.content{padding:22px 26px 60px 26px;}
+.view{display:none;}
+.view.active{display:block;animation:fadeIn .25s ease;}
+@keyframes fadeIn{from{opacity:0;transform:translateY(4px);}to{opacity:1;transform:translateY(0);}}
+
+/* ============ COMPONENTS ============ */
+
+/* KPI cards */
+.kpi-row{display:grid;grid-template-columns:repeat(4,1fr);gap:14px;margin-bottom:20px;}
+.kpi-card{
+  background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);
+  padding:16px 18px;box-shadow:var(--shadow-sm);position:relative;overflow:hidden;
+}
+.kpi-card .kpi-top{display:flex;justify-content:space-between;align-items:flex-start;}
+.kpi-label{font-size:11.5px;color:var(--text-muted);font-weight:600;text-transform:uppercase;letter-spacing:.03em;}
+.kpi-icon{width:30px;height:30px;border-radius:8px;display:flex;align-items:center;justify-content:center;flex-shrink:0;}
+.kpi-icon svg{width:15px;height:15px;}
+.kpi-value{font-family:var(--font-display);font-size:28px;font-weight:700;color:var(--navy);margin-top:10px;}
+.kpi-sub{font-size:11.5px;color:var(--text-faint);margin-top:4px;}
+.kpi-sub.up{color:var(--green);}
+.kpi-sub.down{color:var(--red);}
+
+/* Panels / cards */
+.panel{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);box-shadow:var(--shadow-sm);margin-bottom:18px;}
+.panel-head{display:flex;align-items:center;justify-content:space-between;padding:16px 18px;border-bottom:1px solid var(--border);}
+.panel-head h3{font-size:14px;font-weight:700;}
+.panel-head .ph-sub{font-size:11.5px;color:var(--text-faint);font-weight:500;margin-top:2px;}
+.panel-body{padding:18px;}
+
+.grid-2{display:grid;grid-template-columns:1.4fr 1fr;gap:16px;}
+
+/* Gauge (hero) */
+.gauge-wrap{display:flex;align-items:center;gap:22px;}
+.gauge{position:relative;width:132px;height:132px;flex-shrink:0;}
+.gauge svg{transform:rotate(-90deg);}
+.gauge-center{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;}
+.gauge-center .g-num{font-family:var(--font-display);font-size:26px;font-weight:800;color:var(--navy);}
+.gauge-center .g-lbl{font-size:9.5px;color:var(--text-faint);text-transform:uppercase;letter-spacing:.05em;}
+.gauge-legend{display:flex;flex-direction:column;gap:9px;}
+.gl-item{display:flex;align-items:center;gap:8px;font-size:12.5px;}
+.gl-dot{width:9px;height:9px;border-radius:3px;flex-shrink:0;}
+.gl-item b{margin-left:auto;font-family:var(--font-mono);font-size:12px;}
+
+/* Bar chart (dept compliance) */
+.bar-list{display:flex;flex-direction:column;gap:12px;}
+.bar-row{display:grid;grid-template-columns:130px 1fr 42px;align-items:center;gap:10px;font-size:12.5px;}
+.bar-row .b-label{color:var(--text-muted);font-weight:500;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.bar-track{background:var(--bg);border-radius:6px;height:9px;overflow:hidden;}
+.bar-fill{height:100%;border-radius:6px;background:linear-gradient(90deg,var(--blue),#3FA0E8);}
+.b-pct{font-family:var(--font-mono);font-weight:600;text-align:right;color:var(--navy);}
+
+/* Donut mini */
+.donut-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:14px;}
+.donut-card{text-align:center;}
+.donut{width:74px;height:74px;border-radius:50%;margin:0 auto 8px auto;position:relative;}
+.donut-lbl{font-size:11px;color:var(--text-muted);font-weight:600;}
+.donut-val{font-family:var(--font-mono);font-size:11px;color:var(--text-faint);}
+
+/* Table / Interactive-grid style */
+.toolbar{display:flex;align-items:center;justify-content:space-between;padding:14px 18px;border-bottom:1px solid var(--border);gap:12px;flex-wrap:wrap;}
+.filters{display:flex;gap:8px;flex-wrap:wrap;align-items:center;}
+.select, .input-search{
+  border:1px solid var(--border);background:var(--bg);border-radius:7px;
+  padding:7px 10px;font-size:12.5px;color:var(--text);font-family:var(--font-body);
+}
+.input-search{display:flex;align-items:center;gap:6px;min-width:200px;background:var(--surface);}
+.input-search svg{width:13px;height:13px;color:var(--text-faint);}
+.input-search input{border:none;outline:none;font-size:12.5px;flex:1;background:transparent;}
+.select{padding-right:22px;}
+
+.btn{
+  border:none;border-radius:7px;padding:8px 14px;font-size:12.5px;font-weight:600;
+  display:inline-flex;align-items:center;gap:6px;white-space:nowrap;
+}
+.btn svg{width:13px;height:13px;}
+.btn-primary{background:var(--blue);color:#fff;box-shadow:0 2px 6px rgba(11,111,184,.35);}
+.btn-primary:hover{background:var(--blue-deep);}
+.btn-ghost{background:var(--surface);color:var(--text-muted);border:1px solid var(--border);}
+.btn-ghost:hover{background:var(--bg);}
+.btn-sm{padding:5px 10px;font-size:11.5px;}
+
+table.grid{width:100%;border-collapse:collapse;font-size:12.5px;}
+table.grid thead th{
+  text-align:left;padding:10px 14px;background:#F7F9FB;color:var(--text-muted);
+  font-weight:600;font-size:10.8px;text-transform:uppercase;letter-spacing:.03em;
+  border-bottom:1px solid var(--border);white-space:nowrap;
+}
+table.grid tbody td{padding:11px 14px;border-bottom:1px solid #F0F2F5;vertical-align:middle;white-space:nowrap;}
+table.grid tbody tr:hover{background:var(--blue-light);}
+table.grid tbody tr:last-child td{border-bottom:none;}
+.cell-emp{display:flex;align-items:center;gap:9px;}
+.mini-avatar{
+  width:26px;height:26px;border-radius:7px;background:var(--bg);border:1px solid var(--border);
+  display:flex;align-items:center;justify-content:center;font-family:var(--font-display);
+  font-size:10.5px;font-weight:700;color:var(--text-muted);flex-shrink:0;
+}
+.emp-name{font-weight:600;color:var(--navy);font-size:12.5px;}
+.emp-code{font-family:var(--font-mono);font-size:10.5px;color:var(--text-faint);}
+
+.badge{
+  display:inline-flex;align-items:center;gap:5px;padding:3px 9px;border-radius:20px;
+  font-size:10.8px;font-weight:700;letter-spacing:.01em;
+}
+.badge svg{width:9px;height:9px;}
+.badge.completado{background:var(--green-bg);color:var(--green);}
+.badge.proceso{background:var(--amber-bg);color:var(--amber);}
+.badge.pendiente{background:var(--red-bg);color:var(--red);}
+.badge.licencia{background:var(--purple-bg);color:var(--purple);}
+.badge.retirado{background:#EDEFF3;color:#5A6478;}
+
+.freq-tag{font-size:10px;font-family:var(--font-mono);color:var(--text-faint);background:var(--bg);padding:2px 6px;border-radius:5px;}
+
+.evidence-icon{
+  width:28px;height:28px;border-radius:7px;display:flex;align-items:center;justify-content:center;border:1px dashed var(--border);color:var(--text-faint);
+}
+.evidence-icon.ok{background:var(--green-bg);border:1px solid transparent;color:var(--green);cursor:pointer;}
+.evidence-icon svg{width:13px;height:13px;}
+
+.row-actions{display:flex;gap:6px;}
+.icon-action{
+  width:28px;height:28px;border-radius:7px;border:1px solid var(--border);background:var(--surface);
+  display:flex;align-items:center;justify-content:center;color:var(--text-muted);
+}
+.icon-action svg{width:13px;height:13px;}
+.icon-action:hover{background:var(--bg);color:var(--blue);}
+
+.pager{display:flex;align-items:center;justify-content:space-between;padding:12px 18px;font-size:11.5px;color:var(--text-faint);}
+.pager .p-btns{display:flex;gap:6px;}
+.pager button{border:1px solid var(--border);background:var(--surface);border-radius:6px;width:26px;height:26px;color:var(--text-muted);}
+
+/* Alerts panel (notifications) */
+.alert-item{display:flex;gap:12px;padding:13px 18px;border-bottom:1px solid #F0F2F5;}
+.alert-item:last-child{border-bottom:none;}
+.alert-dot{width:8px;height:8px;border-radius:50%;margin-top:5px;flex-shrink:0;}
+.alert-dot.red{background:var(--red);} .alert-dot.amber{background:var(--amber);}
+.alert-title{font-size:12.5px;font-weight:600;color:var(--navy);}
+.alert-desc{font-size:11.5px;color:var(--text-muted);margin-top:2px;}
+.alert-time{font-size:10.5px;color:var(--text-faint);margin-left:auto;white-space:nowrap;}
+
+/* Legend note strip */
+.rule-strip{
+  display:flex;gap:10px;align-items:flex-start;background:var(--blue-light);border:1px solid #CFE4F7;
+  border-radius:var(--radius);padding:12px 16px;font-size:12px;color:var(--blue-deep);margin-bottom:18px;
+}
+.rule-strip svg{width:15px;height:15px;flex-shrink:0;margin-top:1px;}
+.rule-strip b{font-weight:700;}
+
+/* Form (modal) */
+.overlay{
+  position:fixed;inset:0;background:rgba(16,26,51,.5);backdrop-filter:blur(2px);
+  display:none;align-items:flex-start;justify-content:center;padding:40px 20px;z-index:100;overflow:auto;
+}
+.overlay.open{display:flex;}
+.modal{
+  background:var(--surface);border-radius:14px;max-width:760px;width:100%;box-shadow:0 20px 60px rgba(16,26,51,.3);
+  overflow:hidden;
+}
+.modal-head{padding:18px 22px;border-bottom:1px solid var(--border);display:flex;justify-content:space-between;align-items:flex-start;background:linear-gradient(180deg,#FBFCFE,#fff);}
+.modal-head h3{font-size:15.5px;}
+.modal-head .mh-sub{font-size:11.5px;color:var(--text-faint);margin-top:3px;}
+.modal-close{width:30px;height:30px;border:1px solid var(--border);border-radius:8px;background:var(--surface);display:flex;align-items:center;justify-content:center;color:var(--text-muted);}
+.modal-close svg{width:14px;height:14px;}
+.modal-body{padding:20px 22px;max-height:62vh;overflow:auto;}
+.modal-foot{padding:14px 22px;border-top:1px solid var(--border);display:flex;justify-content:space-between;align-items:center;background:#FAFBFC;}
+
+.fieldset-label{font-size:10.8px;font-weight:700;color:var(--blue-deep);text-transform:uppercase;letter-spacing:.05em;margin:18px 0 10px 0;display:flex;align-items:center;gap:7px;}
+.fieldset-label:first-child{margin-top:0;}
+.fieldset-label::after{content:"";flex:1;height:1px;background:var(--border);}
+.form-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px 14px;}
+.form-grid.cols-3{grid-template-columns:1fr 1fr 1fr;}
+.field{display:flex;flex-direction:column;gap:5px;}
+.field.full{grid-column:1/-1;}
+.field label{font-size:11.5px;font-weight:600;color:var(--text-muted);}
+.field label .req{color:var(--red);}
+.field input, .field select, .field textarea{
+  border:1px solid var(--border);border-radius:7px;padding:8px 10px;font-size:12.5px;
+  font-family:var(--font-body);background:var(--surface);color:var(--text);
+}
+.field input:disabled{background:var(--bg);color:var(--text-faint);}
+.field .hint{font-size:10.5px;color:var(--text-faint);}
+.field .hint.calc{color:var(--blue-deep);font-weight:600;}
+.upload-box{
+  border:1.5px dashed var(--border);border-radius:9px;padding:16px;display:flex;align-items:center;gap:12px;
+  background:var(--bg);
+}
+.upload-box svg{width:22px;height:22px;color:var(--blue);flex-shrink:0;}
+.upload-box .u-title{font-size:12.5px;font-weight:600;color:var(--navy);}
+.upload-box .u-sub{font-size:11px;color:var(--text-faint);}
+
+/* Empty states */
+.empty-note{padding:30px;text-align:center;color:var(--text-faint);font-size:12.5px;}
+
+/* Responsive */
+@media(max-width:1100px){
+  .kpi-row{grid-template-columns:repeat(2,1fr);}
+  .grid-2{grid-template-columns:1fr;}
+  .form-grid, .form-grid.cols-3{grid-template-columns:1fr 1fr;}
+}
+@media(max-width:720px){
+  .sidebar{display:none;}
+  .kpi-row{grid-template-columns:1fr;}
+  .form-grid, .form-grid.cols-3{grid-template-columns:1fr;}
+}
+</style>
+</head>
+<body>
+
+<div class="shell">
+
+  <!-- ===================== SIDEBAR ===================== -->
+  <aside class="sidebar">
+    <div class="brand">
+      <div class="brand-mark">
+        <svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2v20M2 12h20"/><circle cx="12" cy="12" r="9"/></svg>
+      </div>
+      <div class="brand-text">
+        <div class="app-name">Vigilancias Médicas</div>
+        <div class="app-sub">APEX_EBS_EXTENSION</div>
+      </div>
+    </div>
+
+    <div class="nav-group-label">Gerencia</div>
+    <ul class="nav">
+      <li><a href="#" class="nav-link active" data-view="v-dashboard" data-role="gerente">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="9" rx="1.5"/><rect x="14" y="3" width="7" height="5" rx="1.5"/><rect x="14" y="12" width="7" height="9" rx="1.5"/><rect x="3" y="16" width="7" height="5" rx="1.5"/></svg>
+        Dashboard de Cumplimiento
+      </a></li>
+    </ul>
+
+    <div class="nav-group-label">Preparador EHS</div>
+    <ul class="nav">
+      <li><a href="#" class="nav-link" data-view="v-ehs" data-role="ehs">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 11l3 3L22 4"/><path d="M21 12v7a2 2 0 01-2 2H5a2 2 0 01-2-2V5a2 2 0 012-2h11"/></svg>
+        Bandeja de Preparación
+        <span class="badge-count">18</span>
+      </a></li>
+    </ul>
+
+    <div class="nav-group-label">Enfermería</div>
+    <ul class="nav">
+      <li><a href="#" class="nav-link" data-view="v-enf" data-role="enfermero">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2a4 4 0 014 4v3h3a1 1 0 011 1v4a1 1 0 01-1 1h-3v3a4 4 0 01-8 0v-3H5a1 1 0 01-1-1v-4a1 1 0 011-1h3V6a4 4 0 014-4z"/></svg>
+        Ejecución de Vigilancias
+        <span class="badge-count">7</span>
+      </a></li>
+    </ul>
+
+    <div class="nav-group-label">Módulos / Programas</div>
+    <ul class="nav">
+      <li><a href="#" class="nav-link" data-view="v-cert" data-role="enfermero">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><path d="M14 2v6h6"/><path d="M9 15l2 2 4-4"/></svg>
+        Certificados de Salud
+      </a></li>
+      <li><a href="#" class="nav-link" data-view="v-vision" data-role="enfermero">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M1 12s4-7 11-7 11 7 11 7-4 7-11 7-11-7-11-7z"/><circle cx="12" cy="12" r="3"/></svg>
+        Evaluaciones Visuales
+      </a></li>
+      <li><a href="#" class="nav-link" data-view="v-resp" data-role="enfermero">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 12a6 6 0 1012 0 6 6 0 00-12 0z"/><path d="M12 2v2M12 20v2"/></svg>
+        Programa Respiratorio
+      </a></li>
+    </ul>
+
+    <div class="nav-group-label">Sistema</div>
+    <ul class="nav">
+      <li><a href="#" class="nav-link" data-view="v-alertas" data-role="all">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 8a6 6 0 10-12 0c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 01-3.46 0"/></svg>
+        Notificaciones y Alertas
+        <span class="badge-count">5</span>
+      </a></li>
+    </ul>
+
+    <div class="sidebar-footer">
+      Vigilancias Médicas v0.1 · Maqueta<br>Basado en App f129 · Theme 42
+    </div>
+  </aside>
+
+  <!-- ===================== MAIN ===================== -->
+  <div class="main">
+
+    <!-- Topbar -->
+    <div class="topbar">
+      <div class="topbar-left">
+        <div>
+          <div class="page-title" id="pageTitle">Dashboard de Cumplimiento</div>
+          <div class="breadcrumb">Vigilancias Médicas &nbsp;/&nbsp; <b id="crumbCurrent">Gerencia</b></div>
+        </div>
+      </div>
+
+      <div class="role-switch" id="roleSwitch">
+        <button class="active" data-role="gerente">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="9" rx="1.5"/><rect x="14" y="3" width="7" height="5" rx="1.5"/><rect x="14" y="12" width="7" height="9" rx="1.5"/><rect x="3" y="16" width="7" height="5" rx="1.5"/></svg>
+          Gerente
+        </button>
+        <button data-role="ehs">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 11l3 3L22 4"/><path d="M21 12v7a2 2 0 01-2 2H5a2 2 0 01-2-2V5a2 2 0 012-2h11"/></svg>
+          Preparador EHS
+        </button>
+        <button data-role="enfermero">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2a4 4 0 014 4v3h3a1 1 0 011 1v4a1 1 0 01-1 1h-3v3a4 4 0 01-8 0v-3H5a1 1 0 01-1-1v-4a1 1 0 011-1h3V6a4 4 0 014-4z"/></svg>
+          Enfermero
+        </button>
+      </div>
+
+      <div class="topbar-right">
+        <div class="icon-btn"><span class="dot"></span>
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 8a6 6 0 10-12 0c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 01-3.46 0"/></svg>
+        </div>
+        <div class="icon-btn">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="7"/><path d="M21 21l-4.3-4.3"/></svg>
+        </div>
+        <div class="user-chip">
+          <div class="avatar" id="userAvatar">RQ</div>
+          <div class="user-meta">
+            <div class="u-name" id="userName">Richard Quispe</div>
+            <div class="u-role" id="userRole">Gerente · Producción</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="content">
+
+      <!-- ============ RULE STRIP (contextual) ============ -->
+      <div class="rule-strip" id="ruleStrip">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M12 16v-4M12 8h.01"/></svg>
+        <div><b>Regla de vigencia:</b> las vigilancias son de frecuencia <b>anual</b>, excepto <b>Visión</b> que es cada <b>2 años</b>. El certificado de salud vence exactamente <b>1 año después</b> de la fecha de la prueba VDRL. No aplica a personal de <b>Cafetería</b> ni a <b>Certificados de Oficiales de Seguridad</b>.</div>
+      </div>
+
+      <!-- ======================================================= -->
+      <!-- VIEW: DASHBOARD (Gerente)                                -->
+      <!-- ======================================================= -->
+      <section class="view active" id="v-dashboard">
+
+        <div class="kpi-row">
+          <div class="kpi-card">
+            <div class="kpi-top">
+              <div class="kpi-label">Cumplimiento Global</div>
+              <div class="kpi-icon" style="background:var(--green-bg);color:var(--green);">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 12l2 2 4-4"/><circle cx="12" cy="12" r="9"/></svg>
+              </div>
+            </div>
+            <div class="kpi-value">78%</div>
+            <div class="kpi-sub up">▲ 4 pts vs. mes anterior</div>
+          </div>
+          <div class="kpi-card">
+            <div class="kpi-top">
+              <div class="kpi-label">Empleados con Pendientes</div>
+              <div class="kpi-icon" style="background:var(--red-bg);color:var(--red);">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="8" r="4"/><path d="M4 21c0-4 4-6 8-6s8 2 8 6"/></svg>
+              </div>
+            </div>
+            <div class="kpi-value">36</div>
+            <div class="kpi-sub">de 214 evaluados en 2026</div>
+          </div>
+          <div class="kpi-card">
+            <div class="kpi-top">
+              <div class="kpi-label">Por Vencer (30 días)</div>
+              <div class="kpi-icon" style="background:var(--amber-bg);color:var(--amber);">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 3"/></svg>
+              </div>
+            </div>
+            <div class="kpi-value">21</div>
+            <div class="kpi-sub down">▲ 6 respecto a la quincena previa</div>
+          </div>
+          <div class="kpi-card">
+            <div class="kpi-top">
+              <div class="kpi-label">Certificados Vencidos</div>
+              <div class="kpi-icon" style="background:var(--blue-light);color:var(--blue);">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><path d="M14 2v6h6"/></svg>
+              </div>
+            </div>
+            <div class="kpi-value">9</div>
+            <div class="kpi-sub">requieren reprogramación EHS</div>
+          </div>
+        </div>
+
+        <div class="grid-2">
+          <!-- Left: gauge + dept bars -->
+          <div>
+            <div class="panel">
+              <div class="panel-head">
+                <div>
+                  <h3>Cumplimiento General por Estatus</h3>
+                  <div class="ph-sub">Año de vigencia 2026 · Todos los departamentos</div>
+                </div>
+                <select class="select"><option>Año 2026</option><option>Año 2025</option></select>
+              </div>
+              <div class="panel-body">
+                <div class="gauge-wrap">
+                  <div class="gauge">
+                    <svg width="132" height="132" viewBox="0 0 132 132">
+                      <circle cx="66" cy="66" r="56" fill="none" stroke="#EEF1F5" stroke-width="14"/>
+                      <circle cx="66" cy="66" r="56" fill="none" stroke="#C43D4B" stroke-width="14"
+                        stroke-dasharray="351.8" stroke-dashoffset="0" stroke-linecap="round"/>
+                      <circle cx="66" cy="66" r="56" fill="none" stroke="#B9770E" stroke-width="14"
+                        stroke-dasharray="351.8" stroke-dashoffset="-56.3" stroke-linecap="round"/>
+                      <circle cx="66" cy="66" r="56" fill="none" stroke="#158A5F" stroke-width="14"
+                        stroke-dasharray="351.8" stroke-dashoffset="-119.6" stroke-linecap="round"/>
+                    </svg>
+                    <div class="gauge-center">
+                      <div class="g-num">78%</div>
+                      <div class="g-lbl">Completado</div>
+                    </div>
+                  </div>
+                  <div class="gauge-legend">
+                    <div class="gl-item"><span class="gl-dot" style="background:var(--green);"></span> Completado <b>78%</b></div>
+                    <div class="gl-item"><span class="gl-dot" style="background:var(--amber);"></span> En proceso <b>13%</b></div>
+                    <div class="gl-item"><span class="gl-dot" style="background:var(--red);"></span> Pendiente <b>9%</b></div>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <div class="panel">
+              <div class="panel-head">
+                <div>
+                  <h3>% Cumplimiento por Departamento</h3>
+                  <div class="ph-sub">Vista jerárquica EBS Position → Departamento</div>
+                </div>
+              </div>
+              <div class="panel-body">
+                <div class="bar-list">
+                  <div class="bar-row"><div class="b-label">Producción</div><div class="bar-track"><div class="bar-fill" style="width:64%;background:linear-gradient(90deg,#C43D4B,#E17482);"></div></div><div class="b-pct">64%</div></div>
+                  <div class="bar-row"><div class="b-label">Envasado</div><div class="bar-track"><div class="bar-fill" style="width:71%;background:linear-gradient(90deg,#B9770E,#E0A83C);"></div></div><div class="b-pct">71%</div></div>
+                  <div class="bar-row"><div class="b-label">Mantenimiento</div><div class="bar-track"><div class="bar-fill" style="width:82%;"></div></div><div class="b-pct">82%</div></div>
+                  <div class="bar-row"><div class="b-label">Calidad</div><div class="bar-track"><div class="bar-fill" style="width:91%;background:linear-gradient(90deg,#158A5F,#2FB37F);"></div></div><div class="b-pct">91%</div></div>
+                  <div class="bar-row"><div class="b-label">Logística</div><div class="bar-track"><div class="bar-fill" style="width:88%;background:linear-gradient(90deg,#158A5F,#2FB37F);"></div></div><div class="b-pct">88%</div></div>
+                  <div class="bar-row"><div class="b-label">Almacén</div><div class="bar-track"><div class="bar-fill" style="width:69%;background:linear-gradient(90deg,#B9770E,#E0A83C);"></div></div><div class="b-pct">69%</div></div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Right: tipo vigilancia + alerts -->
+          <div>
+            <div class="panel">
+              <div class="panel-head">
+                <div><h3>Por Tipo de Vigilancia</h3><div class="ph-sub">% completado del universo asignado</div></div>
+              </div>
+              <div class="panel-body">
+                <div class="donut-grid">
+                  <div class="donut-card">
+                    <div class="donut" style="background:conic-gradient(var(--green) 0% 86%, #EEF1F5 86% 100%);"></div>
+                    <div class="donut-lbl">Visión</div><div class="donut-val">86%</div>
+                  </div>
+                  <div class="donut-card">
+                    <div class="donut" style="background:conic-gradient(var(--green) 0% 74%, #EEF1F5 74% 100%);"></div>
+                    <div class="donut-lbl">Audiometría</div><div class="donut-val">74%</div>
+                  </div>
+                  <div class="donut-card">
+                    <div class="donut" style="background:conic-gradient(var(--amber) 0% 63%, #EEF1F5 63% 100%);"></div>
+                    <div class="donut-lbl">EKG</div><div class="donut-val">63%</div>
+                  </div>
+                  <div class="donut-card">
+                    <div class="donut" style="background:conic-gradient(var(--green) 0% 90%, #EEF1F5 90% 100%);"></div>
+                    <div class="donut-lbl">H. Médico</div><div class="donut-val">90%</div>
+                  </div>
+                  <div class="donut-card">
+                    <div class="donut" style="background:conic-gradient(var(--amber) 0% 58%, #EEF1F5 58% 100%);"></div>
+                    <div class="donut-lbl">Laboratorio</div><div class="donut-val">58%</div>
+                  </div>
+                  <div class="donut-card">
+                    <div class="donut" style="background:conic-gradient(var(--red) 0% 41%, #EEF1F5 41% 100%);"></div>
+                    <div class="donut-lbl">Examen Físico</div><div class="donut-val">41%</div>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <div class="panel">
+              <div class="panel-head">
+                <div><h3>Alertas Recientes</h3><div class="ph-sub">Correo y notificaciones en el sistema</div></div>
+                <button class="btn btn-ghost btn-sm">Ver todas</button>
+              </div>
+              <div>
+                <div class="alert-item">
+                  <span class="alert-dot red"></span>
+                  <div>
+                    <div class="alert-title">Certificado de Salud vencido</div>
+                    <div class="alert-desc">J. Salazar Ríos · Producción · venció 02/07/2026</div>
+                  </div>
+                  <div class="alert-time">hace 2h</div>
+                </div>
+                <div class="alert-item">
+                  <span class="alert-dot amber"></span>
+                  <div>
+                    <div class="alert-title">Audiometría próxima a vencer</div>
+                    <div class="alert-desc">M. Fernández Cruz · Envasado · vence en 12 días</div>
+                  </div>
+                  <div class="alert-time">hace 5h</div>
+                </div>
+                <div class="alert-item">
+                  <span class="alert-dot amber"></span>
+                  <div>
+                    <div class="alert-title">Evaluación visual pendiente</div>
+                    <div class="alert-desc">C. Huamán Torres · Calidad · asignada hace 6 meses</div>
+                  </div>
+                  <div class="alert-time">hace 1d</div>
+                </div>
+                <div class="alert-item">
+                  <span class="alert-dot red"></span>
+                  <div>
+                    <div class="alert-title">Espirometría no registrada</div>
+                    <div class="alert-desc">Programa Respiratorio · Mantenimiento · 4 empleados</div>
+                  </div>
+                  <div class="alert-time">hace 1d</div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="panel">
+          <div class="panel-head">
+            <div><h3>Empleados con Mayor N° de Pendientes</h3><div class="ph-sub">Solo lectura · agrupado por supervisor directo</div></div>
+          </div>
+          <table class="grid">
+            <thead><tr><th>Empleado</th><th>Departamento</th><th>Posición</th><th>Pendientes</th><th>Tipo</th><th>Estatus</th></tr></thead>
+            <tbody>
+              <tr>
+                <td><div class="cell-emp"><div class="mini-avatar">JS</div><div><div class="emp-name">Jorge Salazar Ríos</div><div class="emp-code">EMP-10432</div></div></div></td>
+                <td>Producción</td><td>Operario Línea 2</td><td>3</td>
+                <td>Certificado, EKG, Físico</td>
+                <td><span class="badge pendiente">Pendiente</span></td>
+              </tr>
+              <tr>
+                <td><div class="cell-emp"><div class="mini-avatar">MF</div><div><div class="emp-name">María Fernández Cruz</div><div class="emp-code">EMP-10298</div></div></div></td>
+                <td>Envasado</td><td>Supervisora Turno B</td><td>2</td>
+                <td>Audiometría, Visión</td>
+                <td><span class="badge proceso">En proceso</span></td>
+              </tr>
+              <tr>
+                <td><div class="cell-emp"><div class="mini-avatar">CH</div><div><div class="emp-name">Carlos Huamán Torres</div><div class="emp-code">EMP-10877</div></div></div></td>
+                <td>Calidad</td><td>Analista QA</td><td>2</td>
+                <td>Visión, Laboratorio</td>
+                <td><span class="badge pendiente">Pendiente</span></td>
+              </tr>
+              <tr>
+                <td><div class="cell-emp"><div class="mini-avatar">RP</div><div><div class="emp-name">Rosa Pérez Alania</div><div class="emp-code">EMP-11054</div></div></div></td>
+                <td>Mantenimiento</td><td>Técnico Electricista</td><td>1</td>
+                <td>Programa Respiratorio</td>
+                <td><span class="badge proceso">En proceso</span></td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </section>
+
+      <!-- ======================================================= -->
+      <!-- VIEW: BANDEJA EHS (Preparadores)                         -->
+      <!-- ======================================================= -->
+      <section class="view" id="v-ehs">
+        <div class="panel">
+          <div class="toolbar">
+            <div class="filters">
+              <div class="input-search">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="7"/><path d="M21 21l-4.3-4.3"/></svg>
+                <input type="text" placeholder="Buscar empleado o N° de legajo">
+              </div>
+              <select class="select"><option>Departamento: Todos</option><option>Producción</option><option>Envasado</option><option>Calidad</option></select>
+              <select class="select"><option>Tipo: Todos</option><option>Certificado de Salud</option><option>Visión</option><option>Programa Respiratorio</option><option>Audiometría</option></select>
+              <select class="select"><option>Estatus: Todos</option><option>Pendiente</option><option>En proceso</option><option>Completado</option></select>
+            </div>
+            <button class="btn btn-primary">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 5v14M5 12h14"/></svg>
+              Nuevo Registro
+            </button>
+          </div>
+
+          <table class="grid">
+            <thead>
+              <tr>
+                <th><input type="checkbox"></th>
+                <th>Empleado</th><th>Departamento</th><th>Posición</th><th>Tipo Vigilancia</th>
+                <th>Frecuencia</th><th>Fecha Asignada</th><th>Estatus</th><th>Evidencia</th><th></th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td><input type="checkbox"></td>
+                <td><div class="cell-emp"><div class="mini-avatar">JS</div><div><div class="emp-name">Jorge Salazar Ríos</div><div class="emp-code">EMP-10432</div></div></div></td>
+                <td>Producción</td><td>Operario Línea 2</td>
+                <td>Certificado de Salud</td><td><span class="freq-tag">Anual</span></td>
+                <td>03/06/2026</td>
+                <td><span class="badge pendiente">Pendiente</span></td>
+                <td><div class="evidence-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><path d="M14 2v6h6"/></svg></div></td>
+                <td><div class="row-actions">
+                  <button class="icon-action" title="Preparar" onclick="openModal('modal-cert')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 20h9M16.5 3.5a2.1 2.1 0 013 3L7 19l-4 1 1-4z"/></svg></button>
+                  <button class="icon-action" title="Subir evidencia"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 3v12m0-12l-4 4m4-4l4 4M4 17v2a2 2 0 002 2h12a2 2 0 002-2v-2"/></svg></button>
+                </div></td>
+              </tr>
+              <tr>
+                <td><input type="checkbox"></td>
+                <td><div class="cell-emp"><div class="mini-avatar">MF</div><div><div class="emp-name">María Fernández Cruz</div><div class="emp-code">EMP-10298</div></div></div></td>
+                <td>Envasado</td><td>Supervisora Turno B</td>
+                <td>Evaluación Visual</td><td><span class="freq-tag">Cada 2 años</span></td>
+                <td>28/05/2026</td>
+                <td><span class="badge proceso">En proceso</span></td>
+                <td><div class="evidence-icon ok"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 12l2 2 4-4"/><circle cx="12" cy="12" r="9"/></svg></div></td>
+                <td><div class="row-actions">
+                  <button class="icon-action" title="Preparar" onclick="openModal('modal-vision')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 20h9M16.5 3.5a2.1 2.1 0 013 3L7 19l-4 1 1-4z"/></svg></button>
+                  <button class="icon-action" title="Subir evidencia"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 3v12m0-12l-4 4m4-4l4 4M4 17v2a2 2 0 002 2h12a2 2 0 002-2v-2"/></svg></button>
+                </div></td>
+              </tr>
+              <tr>
+                <td><input type="checkbox"></td>
+                <td><div class="cell-emp"><div class="mini-avatar">RP</div><div><div class="emp-name">Rosa Pérez Alania</div><div class="emp-code">EMP-11054</div></div></div></td>
+                <td>Mantenimiento</td><td>Técnico Electricista</td>
+                <td>Programa Respiratorio</td><td><span class="freq-tag">Anual</span></td>
+                <td>11/06/2026</td>
+                <td><span class="badge proceso">En proceso</span></td>
+                <td><div class="evidence-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><path d="M14 2v6h6"/></svg></div></td>
+                <td><div class="row-actions">
+                  <button class="icon-action" title="Preparar" onclick="openModal('modal-resp')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 20h9M16.5 3.5a2.1 2.1 0 013 3L7 19l-4 1 1-4z"/></svg></button>
+                  <button class="icon-action" title="Subir evidencia"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 3v12m0-12l-4 4m4-4l4 4M4 17v2a2 2 0 002 2h12a2 2 0 002-2v-2"/></svg></button>
+                </div></td>
+              </tr>
+              <tr>
+                <td><input type="checkbox"></td>
+                <td><div class="cell-emp"><div class="mini-avatar">CH</div><div><div class="emp-name">Carlos Huamán Torres</div><div class="emp-code">EMP-10877</div></div></div></td>
+                <td>Calidad</td><td>Analista QA</td>
+                <td>Laboratorio</td><td><span class="freq-tag">Anual</span></td>
+                <td>19/06/2026</td>
+                <td><span class="badge completado">Completado</span></td>
+                <td><div class="evidence-icon ok"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 12l2 2 4-4"/><circle cx="12" cy="12" r="9"/></svg></div></td>
+                <td><div class="row-actions">
+                  <button class="icon-action" title="Ver"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M1 12s4-7 11-7 11 7 11 7-4 7-11 7-11-7-11-7z"/><circle cx="12" cy="12" r="3"/></svg></button>
+                </div></td>
+              </tr>
+              <tr>
+                <td><input type="checkbox"></td>
+                <td><div class="cell-emp"><div class="mini-avatar">LV</div><div><div class="emp-name">Luis Vargas Peña</div><div class="emp-code">EMP-10611</div></div></div></td>
+                <td>Almacén</td><td>Montacarguista</td>
+                <td>Audiometría</td><td><span class="freq-tag">Anual</span></td>
+                <td>25/06/2026</td>
+                <td><span class="badge pendiente">Pendiente</span></td>
+                <td><div class="evidence-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><path d="M14 2v6h6"/></svg></div></td>
+                <td><div class="row-actions">
+                  <button class="icon-action" title="Preparar"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 20h9M16.5 3.5a2.1 2.1 0 013 3L7 19l-4 1 1-4z"/></svg></button>
+                  <button class="icon-action" title="Subir evidencia"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 3v12m0-12l-4 4m4-4l4 4M4 17v2a2 2 0 002 2h12a2 2 0 002-2v-2"/></svg></button>
+                </div></td>
+              </tr>
+            </tbody>
+          </table>
+          <div class="pager">
+            <div>Mostrando 1–5 de 18 registros</div>
+            <div class="p-btns"><button>‹</button><button>1</button><button>2</button><button>›</button></div>
+          </div>
+        </div>
+      </section>
+
+      <!-- ======================================================= -->
+      <!-- VIEW: EJECUCIÓN ENFERMERÍA                                -->
+      <!-- ======================================================= -->
+      <section class="view" id="v-enf">
+        <div class="panel">
+          <div class="toolbar">
+            <div class="filters">
+              <div class="input-search">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="7"/><path d="M21 21l-4.3-4.3"/></svg>
+                <input type="text" placeholder="Buscar empleado">
+              </div>
+              <select class="select"><option>Listos para ejecución</option><option>Todos</option></select>
+              <select class="select"><option>Tipo: Todos</option><option>Certificado de Salud</option><option>Visión</option><option>Programa Respiratorio</option></select>
+            </div>
+            <button class="btn btn-ghost"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 12a9 9 0 11-3-6.7"/><path d="M21 3v6h-6"/></svg>Actualizar</button>
+          </div>
+          <table class="grid">
+            <thead><tr><th>Empleado</th><th>Turno</th><th>Tipo Vigilancia</th><th>Preparado por</th><th>Fecha Prep.</th><th>Estatus</th><th></th></tr></thead>
+            <tbody>
+              <tr>
+                <td><div class="cell-emp"><div class="mini-avatar">MF</div><div><div class="emp-name">María Fernández Cruz</div><div class="emp-code">EMP-10298</div></div></div></td>
+                <td>Turno B</td><td>Evaluación Visual</td><td>A. Barrenechea</td><td>29/06/2026</td>
+                <td><span class="badge proceso">En proceso</span></td>
+                <td><button class="btn btn-primary btn-sm" onclick="openModal('modal-vision')">Registrar resultado</button></td>
+              </tr>
+              <tr>
+                <td><div class="cell-emp"><div class="mini-avatar">RP</div><div><div class="emp-name">Rosa Pérez Alania</div><div class="emp-code">EMP-11054</div></div></div></td>
+                <td>Turno A</td><td>Programa Respiratorio</td><td>A. Ramírez Díaz</td><td>02/07/2026</td>
+                <td><span class="badge proceso">En proceso</span></td>
+                <td><button class="btn btn-primary btn-sm" onclick="openModal('modal-resp')">Registrar resultado</button></td>
+              </tr>
+              <tr>
+                <td><div class="cell-emp"><div class="mini-avatar">JS</div><div><div class="emp-name">Jorge Salazar Ríos</div><div class="emp-code">EMP-10432</div></div></div></td>
+                <td>Turno C</td><td>Certificado de Salud</td><td>A. Barrenechea</td><td>05/07/2026</td>
+                <td><span class="badge pendiente">Pendiente</span></td>
+                <td><button class="btn btn-primary btn-sm" onclick="openModal('modal-cert')">Registrar resultado</button></td>
+              </tr>
+              <tr>
+                <td><div class="cell-emp"><div class="mini-avatar">EG</div><div><div class="emp-name">Elena Gómez Rivas</div><div class="emp-code">EMP-10955</div></div></div></td>
+                <td>Turno A</td><td>Programa Respiratorio</td><td>A. Ramírez Díaz</td><td>08/07/2026</td>
+                <td><span class="badge licencia">Licencia Enfermedad</span></td>
+                <td><button class="btn btn-ghost btn-sm" onclick="openModal('modal-resp')">Ver / Editar</button></td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </section>
+
+      <!-- ======================================================= -->
+      <!-- VIEW: MÓDULO CERTIFICADOS DE SALUD (listado)              -->
+      <!-- ======================================================= -->
+      <section class="view" id="v-cert">
+        <div class="panel">
+          <div class="panel-head">
+            <div><h3>Certificados de Salud</h3><div class="ph-sub">Incluye variante con Cultivo de Garganta / Stool · Vencimiento = Fecha VDRL + 1 año</div></div>
+            <button class="btn btn-primary" onclick="openModal('modal-cert')">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 5v14M5 12h14"/></svg>
+              Nuevo Certificado
+            </button>
+          </div>
+          <table class="grid">
+            <thead><tr><th>Empleado</th><th>Turno</th><th>Posición</th><th>Fecha VDRL</th><th>Vence</th><th>Cultivo/Stool</th><th>Estatus</th><th>PDF</th><th></th></tr></thead>
+            <tbody>
+              <tr>
+                <td><div class="cell-emp"><div class="mini-avatar">JS</div><div><div class="emp-name">Jorge Salazar Ríos</div><div class="emp-code">EMP-10432</div></div></div></td>
+                <td>Turno C</td><td>Operario Línea 2</td><td>—</td><td>—</td><td>Pendiente</td>
+                <td><span class="badge pendiente">Pendiente</span></td>
+                <td><div class="evidence-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><path d="M14 2v6h6"/></svg></div></td>
+                <td><button class="icon-action" onclick="openModal('modal-cert')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 20h9M16.5 3.5a2.1 2.1 0 013 3L7 19l-4 1 1-4z"/></svg></button></td>
+              </tr>
+              <tr>
+                <td><div class="cell-emp"><div class="mini-avatar">DL</div><div><div class="emp-name">Diego López Soto</div><div class="emp-code">EMP-10120</div></div></div></td>
+                <td>Turno A</td><td>Jefe de Turno</td><td>14/03/2026</td><td>14/03/2027</td><td>Recibido</td>
+                <td><span class="badge completado">Completado</span></td>
+                <td><div class="evidence-icon ok"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 12l2 2 4-4"/><circle cx="12" cy="12" r="9"/></svg></div></td>
+                <td><button class="icon-action" onclick="openModal('modal-cert')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M1 12s4-7 11-7 11 7 11 7-4 7-11 7-11-7-11-7z"/><circle cx="12" cy="12" r="3"/></svg></button></td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </section>
+
+      <!-- ======================================================= -->
+      <!-- VIEW: MÓDULO EVALUACIONES VISUALES (listado)              -->
+      <!-- ======================================================= -->
+      <section class="view" id="v-vision">
+        <div class="panel">
+          <div class="panel-head">
+            <div><h3>Evaluaciones Visuales</h3><div class="ph-sub">Frecuencia especial: cada 2 años</div></div>
+            <button class="btn btn-primary" onclick="openModal('modal-vision')">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 5v14M5 12h14"/></svg>
+              Nueva Evaluación
+            </button>
+          </div>
+          <table class="grid">
+            <thead><tr><th>Empleado</th><th>Óptica</th><th>Fecha Toma Medidas</th><th>Entrega de Gafas</th><th>Costo Gafas</th><th>Estatus</th><th>PDF Receta</th><th></th></tr></thead>
+            <tbody>
+              <tr>
+                <td><div class="cell-emp"><div class="mini-avatar">MF</div><div><div class="emp-name">María Fernández Cruz</div><div class="emp-code">EMP-10298</div></div></div></td>
+                <td>Óptica Visión Perú</td><td>02/07/2026</td><td>—</td><td>S/ 180.00</td>
+                <td><span class="badge proceso">En proceso</span></td>
+                <td><div class="evidence-icon ok"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 12l2 2 4-4"/><circle cx="12" cy="12" r="9"/></svg></div></td>
+                <td><button class="icon-action" onclick="openModal('modal-vision')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 20h9M16.5 3.5a2.1 2.1 0 013 3L7 19l-4 1 1-4z"/></svg></button></td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </section>
+
+      <!-- ======================================================= -->
+      <!-- VIEW: PROGRAMA RESPIRATORIO (listado)                     -->
+      <!-- ======================================================= -->
+      <section class="view" id="v-resp">
+        <div class="panel">
+          <div class="panel-head">
+            <div><h3>Programa Especial — Vigilancia Respiratoria</h3><div class="ph-sub">Estados excepcionales: Licencia Enfermedad, Retirado</div></div>
+            <button class="btn btn-primary" onclick="openModal('modal-resp')">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 5v14M5 12h14"/></svg>
+              Nuevo Registro
+            </button>
+          </div>
+          <table class="grid">
+            <thead><tr><th>Empleado</th><th>N° Empleado</th><th>Fit Test</th><th>Espirometría</th><th>EKG</th><th>Estatus</th><th></th></tr></thead>
+            <tbody>
+              <tr>
+                <td><div class="cell-emp"><div class="mini-avatar">RP</div><div><div class="emp-name">Rosa Pérez Alania</div></div></div></td>
+                <td class="emp-code">EMP-11054</td><td>—</td><td>02/07/2026</td><td>—</td>
+                <td><span class="badge proceso">En proceso</span></td>
+                <td><button class="icon-action" onclick="openModal('modal-resp')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 20h9M16.5 3.5a2.1 2.1 0 013 3L7 19l-4 1 1-4z"/></svg></button></td>
+              </tr>
+              <tr>
+                <td><div class="cell-emp"><div class="mini-avatar">EG</div><div><div class="emp-name">Elena Gómez Rivas</div></div></div></td>
+                <td class="emp-code">EMP-10955</td><td>—</td><td>—</td><td>—</td>
+                <td><span class="badge licencia">Licencia Enfermedad</span></td>
+                <td><button class="icon-action" onclick="openModal('modal-resp')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 20h9M16.5 3.5a2.1 2.1 0 013 3L7 19l-4 1 1-4z"/></svg></button></td>
+              </tr>
+              <tr>
+                <td><div class="cell-emp"><div class="mini-avatar">FT</div><div><div class="emp-name">Fabián Torres Medina</div></div></div></td>
+                <td class="emp-code">EMP-09871</td><td>—</td><td>—</td><td>—</td>
+                <td><span class="badge retirado">Retirado</span></td>
+                <td><button class="icon-action"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M1 12s4-7 11-7 11 7 11 7-4 7-11 7-11-7-11-7z"/><circle cx="12" cy="12" r="3"/></svg></button></td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </section>
+
+      <!-- ======================================================= -->
+      <!-- VIEW: ALERTAS -->
+      <!-- ======================================================= -->
+      <section class="view" id="v-alertas">
+        <div class="panel">
+          <div class="panel-head"><div><h3>Centro de Notificaciones</h3><div class="ph-sub">Correo electrónico y notificaciones internas</div></div></div>
+          <div class="alert-item"><span class="alert-dot red"></span><div><div class="alert-title">Certificado de Salud vencido</div><div class="alert-desc">J. Salazar Ríos · Producción</div></div><div class="alert-time">hace 2h</div></div>
+          <div class="alert-item"><span class="alert-dot amber"></span><div><div class="alert-title">Audiometría próxima a vencer (12 días)</div><div class="alert-desc">M. Fernández Cruz · Envasado</div></div><div class="alert-time">hace 5h</div></div>
+          <div class="alert-item"><span class="alert-dot amber"></span><div><div class="alert-title">Evaluación visual pendiente hace 6 meses</div><div class="alert-desc">C. Huamán Torres · Calidad</div></div><div class="alert-time">hace 1d</div></div>
+          <div class="alert-item"><span class="alert-dot red"></span><div><div class="alert-title">Espirometría no registrada — 4 empleados</div><div class="alert-desc">Programa Respiratorio · Mantenimiento</div></div><div class="alert-time">hace 1d</div></div>
+          <div class="alert-item"><span class="alert-dot amber"></span><div><div class="alert-title">VDRL vence en 20 días</div><div class="alert-desc">D. López Soto · Turno A</div></div><div class="alert-time">hace 3d</div></div>
+        </div>
+      </section>
+
+    </div>
+  </div>
+</div>
+
+<!-- ============================================================= -->
+<!-- MODAL: CERTIFICADO DE SALUD                                    -->
+<!-- ============================================================= -->
+<div class="overlay" id="modal-cert">
+  <div class="modal">
+    <div class="modal-head">
+      <div>
+        <h3>Certificado de Salud — Jorge Salazar Ríos</h3>
+        <div class="mh-sub">EMP-10432 · Producción · Frecuencia anual</div>
+      </div>
+      <button class="modal-close" onclick="closeModal('modal-cert')">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 6L6 18M6 6l12 12"/></svg>
+      </button>
+    </div>
+    <div class="modal-body">
+      <div class="fieldset-label">Datos del Empleado</div>
+      <div class="form-grid cols-3">
+        <div class="field"><label>Nombre</label><input type="text" value="Jorge Salazar Ríos" disabled></div>
+        <div class="field"><label>Turno</label><input type="text" value="Turno C" disabled></div>
+        <div class="field"><label>Posición</label><input type="text" value="Operario Línea 2" disabled></div>
+      </div>
+
+      <div class="fieldset-label">Pruebas</div>
+      <div class="form-grid">
+        <div class="field">
+          <label>Fecha de Prueba de Sangre VDRL <span class="req">*</span></label>
+          <input type="date" id="vdrlDate" onchange="calcVencimiento()">
+          <span class="hint">Define el vencimiento del certificado (+1 año)</span>
+        </div>
+        <div class="field"><label>Fecha Prueba de Tuberculina o Placa</label><input type="date"></div>
+      </div>
+
+      <div class="fieldset-label">Cultivo de Garganta / Stool</div>
+      <div class="form-grid">
+        <div class="field"><label>Fecha de Realización y Recibo</label><input type="date"></div>
+        <div class="field"><label>Fecha de Repetición de Cultivo (si aplica)</label><input type="date"></div>
+        <div class="field"><label>Fecha de Evaluación Médica</label><input type="date"></div>
+        <div class="field"><label>Fecha de Entrega de Receta</label><input type="date"></div>
+      </div>
+
+      <div class="fieldset-label">Cierre</div>
+      <div class="form-grid">
+        <div class="field"><label>Fecha de Entrega de Certificado</label><input type="date"></div>
+        <div class="field">
+          <label>Fecha de Vencimiento (calculada)</label>
+          <input type="text" id="vencCalc" value="—" disabled>
+          <span class="hint calc">VDRL + 1 año — regla de negocio automática</span>
+        </div>
+        <div class="field full"><label>Comentarios</label><textarea rows="2" placeholder="Observaciones del preparador o enfermería…"></textarea></div>
+        <div class="field">
+          <label>Estatus</label>
+          <select><option>Pendiente</option><option>En proceso</option><option selected>Completado</option></select>
+        </div>
+        <div class="field">
+          <label>Archivo PDF del Certificado <span class="req">*</span></label>
+          <div class="upload-box">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 3v12m0-12l-4 4m4-4l4 4M4 17v2a2 2 0 002 2h12a2 2 0 002-2v-2"/></svg>
+            <div><div class="u-title">certificado_salud_JS10432.pdf</div><div class="u-sub">248 KB · subido 05/07/2026 · solo PDF</div></div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="modal-foot">
+      <span class="ph-sub">Registro no aplica a personal de Cafetería ni Oficiales de Seguridad</span>
+      <div style="display:flex;gap:8px;">
+        <button class="btn btn-ghost" onclick="closeModal('modal-cert')">Cancelar</button>
+        <button class="btn btn-primary" onclick="closeModal('modal-cert')">Guardar Registro</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ============================================================= -->
+<!-- MODAL: EVALUACIÓN VISUAL                                       -->
+<!-- ============================================================= -->
+<div class="overlay" id="modal-vision">
+  <div class="modal">
+    <div class="modal-head">
+      <div>
+        <h3>Evaluación Visual — María Fernández Cruz</h3>
+        <div class="mh-sub">EMP-10298 · Envasado · Frecuencia cada 2 años</div>
+      </div>
+      <button class="modal-close" onclick="closeModal('modal-vision')">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 6L6 18M6 6l12 12"/></svg>
+      </button>
+    </div>
+    <div class="modal-body">
+      <div class="fieldset-label">Fechas del Proceso</div>
+      <div class="form-grid">
+        <div class="field"><label>Fecha Asignada / Reasignada para Evaluación</label><input type="date" value="2026-07-02"></div>
+        <div class="field"><label>Fecha de Entrega de Receta</label><input type="date"></div>
+        <div class="field"><label>Fecha de Toma de Medidas para Gafas</label><input type="date"></div>
+        <div class="field"><label>Fecha de Entrega de Gafas</label><input type="date"></div>
+      </div>
+
+      <div class="fieldset-label">Proveedor y Costos</div>
+      <div class="form-grid cols-3">
+        <div class="field full" style="grid-column:1/3;"><label>Óptica donde se Realizó</label><input type="text" value="Óptica Visión Perú"></div>
+        <div class="field"><label>Cantidad Pagada de Deducible</label><input type="text" placeholder="S/ 0.00"></div>
+        <div class="field"><label>Costo de las Gafas</label><input type="text" value="S/ 180.00"></div>
+      </div>
+
+      <div class="fieldset-label">Cierre</div>
+      <div class="form-grid">
+        <div class="field full"><label>Comentarios</label><textarea rows="2" placeholder="Observaciones…"></textarea></div>
+        <div class="field">
+          <label>Estatus</label>
+          <select><option>Pendiente</option><option selected>En proceso</option><option>Completado</option></select>
+        </div>
+        <div class="field">
+          <label>Evidencia PDF de la Receta <span class="req">*</span></label>
+          <div class="upload-box">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 3v12m0-12l-4 4m4-4l4 4M4 17v2a2 2 0 002 2h12a2 2 0 002-2v-2"/></svg>
+            <div><div class="u-title">receta_optica_MF10298.pdf</div><div class="u-sub">112 KB · subido 02/07/2026</div></div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="modal-foot">
+      <span class="ph-sub">Próxima evaluación programada: 02/07/2028</span>
+      <div style="display:flex;gap:8px;">
+        <button class="btn btn-ghost" onclick="closeModal('modal-vision')">Cancelar</button>
+        <button class="btn btn-primary" onclick="closeModal('modal-vision')">Guardar Registro</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ============================================================= -->
+<!-- MODAL: PROGRAMA RESPIRATORIO                                   -->
+<!-- ============================================================= -->
+<div class="overlay" id="modal-resp">
+  <div class="modal">
+    <div class="modal-head">
+      <div>
+        <h3>Programa Respiratorio — Rosa Pérez Alania</h3>
+        <div class="mh-sub">EMP-11054 · Mantenimiento · Frecuencia anual</div>
+      </div>
+      <button class="modal-close" onclick="closeModal('modal-resp')">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 6L6 18M6 6l12 12"/></svg>
+      </button>
+    </div>
+    <div class="modal-body">
+      <div class="fieldset-label">Identificación</div>
+      <div class="form-grid cols-3">
+        <div class="field"><label>Nombre</label><input type="text" value="Rosa Pérez Alania" disabled></div>
+        <div class="field"><label>Turno</label><input type="text" value="Turno A" disabled></div>
+        <div class="field"><label>Número de Empleado</label><input type="text" value="EMP-11054" disabled></div>
+        <div class="field full" style="grid-column:1/2;"><label>Posición</label><input type="text" value="Técnico Electricista" disabled></div>
+      </div>
+
+      <div class="fieldset-label">Fechas Clínicas</div>
+      <div class="form-grid">
+        <div class="field"><label>Fecha Cuestionario Respiratorio Largo</label><input type="date"></div>
+        <div class="field"><label>Fecha de Espirometría</label><input type="date" value="2026-07-02"></div>
+        <div class="field"><label>Fecha de EKG</label><input type="date"></div>
+        <div class="field"><label>Fecha de Evaluación Médica</label><input type="date"></div>
+        <div class="field"><label>Fecha Cuestionario Respiratorio Anual Corto</label><input type="date"></div>
+        <div class="field"><label>Fecha de Fit Test</label><input type="date"></div>
+      </div>
+
+      <div class="fieldset-label">Cierre</div>
+      <div class="form-grid">
+        <div class="field full"><label>Comentarios</label><textarea rows="2" placeholder="Observaciones…"></textarea></div>
+        <div class="field">
+          <label>Estatus</label>
+          <select>
+            <option>Pendiente</option>
+            <option selected>En proceso</option>
+            <option>Completado</option>
+            <option>Licencia Enfermedad</option>
+            <option>Retirado</option>
+          </select>
+          <span class="hint">Incluye estados excepcionales del programa</span>
+        </div>
+      </div>
+    </div>
+    <div class="modal-foot">
+      <span class="ph-sub">Control de vigencia anual del Programa Respiratorio</span>
+      <div style="display:flex;gap:8px;">
+        <button class="btn btn-ghost" onclick="closeModal('modal-resp')">Cancelar</button>
+        <button class="btn btn-primary" onclick="closeModal('modal-resp')">Guardar Registro</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+// ---------- Navigation ----------
+const navLinks = document.querySelectorAll('.nav-link');
+const views = document.querySelectorAll('.view');
+const pageTitle = document.getElementById('pageTitle');
+const crumbCurrent = document.getElementById('crumbCurrent');
+const roleButtons = document.querySelectorAll('.role-switch button');
+const userAvatar = document.getElementById('userAvatar');
+const userName = document.getElementById('userName');
+const userRole = document.getElementById('userRole');
+
+const titles = {
+  'v-dashboard': ['Dashboard de Cumplimiento','Gerencia'],
+  'v-ehs': ['Bandeja de Preparación','Preparador EHS'],
+  'v-enf': ['Ejecución de Vigilancias','Enfermería'],
+  'v-cert': ['Certificados de Salud','Módulos'],
+  'v-vision': ['Evaluaciones Visuales','Módulos'],
+  'v-resp': ['Programa Respiratorio','Módulos'],
+  'v-alertas': ['Notificaciones y Alertas','Sistema']
+};
+
+const roleProfiles = {
+  gerente: {name:'Richard Quispe', role:'Gerente · Producción', initials:'RQ'},
+  ehs: {name:'Angela Barrenechea', role:'Preparadora EHS', initials:'AB'},
+  enfermero: {name:'Angel Ramírez Díaz', role:'Enfermero Ocupacional', initials:'AR'}
+};
+
+function showView(id){
+  views.forEach(v=>v.classList.remove('active'));
+  document.getElementById(id).classList.add('active');
+  navLinks.forEach(l=>l.classList.remove('active'));
+  const link = document.querySelector(`.nav-link[data-view="${id}"]`);
+  if(link) link.classList.add('active');
+  pageTitle.textContent = titles[id][0];
+  crumbCurrent.textContent = titles[id][1];
+}
+
+function setRole(role){
+  roleButtons.forEach(b=>b.classList.toggle('active', b.dataset.role===role));
+  const p = roleProfiles[role];
+  userAvatar.textContent = p.initials;
+  userName.textContent = p.name;
+  userRole.textContent = p.role;
+}
+
+navLinks.forEach(link=>{
+  link.addEventListener('click', e=>{
+    e.preventDefault();
+    showView(link.dataset.view);
+    if(link.dataset.role && link.dataset.role !== 'all'){ setRole(link.dataset.role); }
+  });
+});
+
+roleButtons.forEach(btn=>{
+  btn.addEventListener('click', ()=>{
+    setRole(btn.dataset.role);
+    if(btn.dataset.role==='gerente') showView('v-dashboard');
+    if(btn.dataset.role==='ehs') showView('v-ehs');
+    if(btn.dataset.role==='enfermero') showView('v-enf');
+  });
+});
+
+// ---------- Modals ----------
+function openModal(id){ document.getElementById(id).classList.add('open'); }
+function closeModal(id){ document.getElementById(id).classList.remove('open'); }
+document.querySelectorAll('.overlay').forEach(ov=>{
+  ov.addEventListener('click', e=>{ if(e.target===ov) ov.classList.remove('open'); });
+});
+
+// ---------- Regla VDRL + 1 año ----------
+function calcVencimiento(){
+  const val = document.getElementById('vdrlDate').value;
+  const out = document.getElementById('vencCalc');
+  if(!val){ out.value='—'; return; }
+  const d = new Date(val);
+  d.setFullYear(d.getFullYear()+1);
+  out.value = d.toLocaleDateString('es-PE',{day:'2-digit',month:'2-digit',year:'numeric'});
+}
+</script>
+</body>
+</html>
